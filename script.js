@@ -434,21 +434,21 @@ let currentRound = 1;
 const roundCardsDiv = document.getElementById('round-cards');
 const draftHistoryList = document.getElementById('draft-history-list');
 
+// Function to shuffle array and return a sub-array of specified size
 function getRandomSubarray(arr, size) {
-    const shuffled = arr.slice();
-    let i = arr.length;
-    let temp;
-    let index;
-
-    while (i--) {
-        index = Math.floor((i + 1) * Math.random());
-        temp = shuffled[index];
-        shuffled[index] = shuffled[i];
-        shuffled[i] = temp;
+    if (!Array.isArray(arr) || arr.length === 0) {
+        console.error('Invalid input array for getRandomSubarray');
+        return [];
+    }
+    const shuffled = [...arr]; // Create a copy to avoid modifying original array
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap elements
     }
     return shuffled.slice(0, size);
 }
 
+// Notification messages for each round
 const roundNotifications = {
     1: 'MVP, PoY & Top Gold',
     2: 'RPoY, RoY & Top Silver RP',
@@ -464,34 +464,41 @@ const roundNotifications = {
     12: 'Future Legends'
 };
 
+// Function to display cards for the current round
 function displayRoundCards(roundNumber) {
-    roundCardsDiv.innerHTML = '';
+    if (typeof roundNumber !== 'number' || roundNumber <= 0) {
+        console.error('Invalid round number');
+        return;
+    }
+
+    roundCardsDiv.innerHTML = ''; // Clear existing cards
+
     const roundInfo = roundData[roundNumber];
 
     if (!roundInfo) {
         alert('Draft complete!');
-        updateDraftInfo();
         return;
     }
 
     let availableCards = roundInfo.cards;
 
     // Filter cards based on position if position_filter is present
-    if (roundInfo.position_filter && roundInfo.position_filter.length > 0) {
+    if (roundInfo.position_filter && Array.isArray(roundInfo.position_filter) && roundInfo.position_filter.length > 0) {
         availableCards = availableCards.filter(cardId => {
             const player = players[cardId];
             return player && roundInfo.position_filter.includes(player.Position);
         });
     }
 
-    const totalPossibleCards = roundInfo.cards.length;
-    let cardCountText;
-
-    if(availableCards.length < 6) {
-        cardCountText = `Displaying ${availableCards.length} of ${totalPossibleCards} possible cards`;
-    } else{
-        cardCountText = `Displaying 6 of ${totalPossibleCards} possible cards`;
+    if (!Array.isArray(availableCards)) {
+        console.error('Available cards is not an array');
+        return;
     }
+
+    const totalPossibleCards = roundInfo.cards.length;
+    const cardCountText = availableCards.length < 6
+        ? `Displaying ${availableCards.length} of ${totalPossibleCards} possible cards`
+        : `Displaying 6 of ${totalPossibleCards} possible cards`;
 
     if (availableCards.length > 6) {
         availableCards = getRandomSubarray(availableCards, 6);
@@ -517,6 +524,7 @@ function displayRoundCards(roundNumber) {
             roundCardsDiv.appendChild(cardDiv);
         }
     });
+
     document.getElementById('card-count').innerHTML = `<em>${cardCountText}</em>`;
 
     // Display notification
@@ -527,74 +535,106 @@ function displayRoundCards(roundNumber) {
     updateDraftInfo();
 }
 
+// Function to handle drafting a card
 function draftCard(cardId) {
+    if (typeof cardId !== 'number' || cardId <= 0) {
+        console.error('Invalid card ID');
+        return;
+    }
+
     const player = players[cardId];
-    if (player) {
-        let listId;
-        let prefix;
 
-        if ((player.Position === 'SP' || player.Position === 'RP') && pitcherCount < 7) {
-            listId = 'pitchers-list';
-            prefix = 'P';
-            pitcherCount++;
-        } else if (player.Position !== 'SP' && player.Position !== 'RP' && batterCount < 9) {
-            listId = 'batters-list';
-            prefix = 'H';
-            batterCount++;
-        } else if (benchCount < 4) {
-            listId = 'bench-list';
-            prefix = 'B';
-            benchCount++;
-        } else {
-            alert('All draft slots are full!');
-            return;
-        }
+    if (!player) {
+        console.error('Player not found');
+        return;
+    }
 
-        const list = document.getElementById(listId);
-        const listItems = list.getElementsByTagName('li');
-        
-        for (let i = 0; i < listItems.length; i++) {
-            if (listItems[i].textContent === `${prefix} - `) {
-                listItems[i].textContent = `${prefix} - ${player.Player_Name} (${player.Position})`;
-                break;
-            }
-        }
+    let listId;
+    let prefix;
 
-        // Remove the drafted card from display
-        const cardElement = document.querySelector(`[onclick="draftCard(${cardId})"]`).parentNode;
-        if(cardElement){
-            cardElement.remove();
-        }
+    if ((player.Position === 'SP' || player.Position === 'RP') && pitcherCount < 7) {
+        listId = 'pitchers-list';
+        prefix = 'P';
+        pitcherCount++;
+    } else if (player.Position !== 'SP' && player.Position !== 'RP' && batterCount < 9) {
+        listId = 'batters-list';
+        prefix = 'H';
+        batterCount++;
+    } else if (benchCount < 4) {
+        listId = 'bench-list';
+        prefix = 'B';
+        benchCount++;
+    } else {
+        alert('All draft slots are full!');
+        return;
+    }
 
-        // Remove drafted card from available cards
-        const currentRoundCards = roundData[currentRound].cards;
-        roundData[currentRound].cards = currentRoundCards.filter(id => id !== cardId);
+    const list = document.getElementById(listId);
 
-        picksMade++; // Increment picksMade
+    if (!list) {
+        console.error('List element not found');
+        return;
+    }
 
-        if (roundData[currentRound] && picksMade >= roundData[currentRound].picks) {
-            // Move to the next round
-            currentRound++;
-            picksMade = 0; // Reset picksMade for the new round
-            displayRoundCards(currentRound); // Only display new cards when moving to a new round
-        } else {
-            updateDraftInfo(); // Just update the draft info if staying in the same round
+    const listItems = list.getElementsByTagName('li');
+
+    for (let i = 0; i < listItems.length; i++) {
+        if (listItems[i].textContent === `${prefix} - `) {
+            listItems[i].textContent = `${prefix} - ${player.Player_Name} (${player.Position})`;
+            break;
         }
     }
+
+    // Remove the drafted card from display
+    const cardElement = document.querySelector(`[onclick="draftCard(${cardId})"]`);
+
+    if (cardElement && cardElement.parentNode) {
+        cardElement.parentNode.remove();
+    }
+
+    // Remove drafted card from available cards
+    if (roundData[currentRound] && Array.isArray(roundData[currentRound].cards)) {
+        roundData[currentRound].cards = roundData[currentRound].cards.filter(id => id !== cardId);
+    } else {
+        console.error('Invalid round data or cards array');
+        return;
+    }
+
+    picksMade++;
+
+    if (roundData[currentRound] && picksMade >= roundData[currentRound].picks) {
+        // Move to the next round
+        currentRound++;
+        picksMade = 0;
+    }
+
+    updateDraftInfo();
+    displayRoundCards(currentRound);
 }
 
+// Function to update draft information
 function updateDraftInfo() {
     const roundInfo = roundData[currentRound];
+
     if (roundInfo) {
-        document.getElementById('picks-left').textContent = roundInfo.picks - picksMade;
-        document.getElementById('round-number').textContent = currentRound;
-        // Update the main heading round number
-        const roundHeader = document.querySelector('#draft-info h2');
-        if (roundHeader) {
-            roundHeader.textContent = `Round: ${currentRound}`;
+        // Update picks left
+        const picksLeftElement = document.getElementById('picks-left');
+        if (picksLeftElement) {
+            picksLeftElement.textContent = roundInfo.picks - picksMade;
+        }
+
+        // Update round number display
+        const roundNumberElement = document.getElementById('round-number');
+        if (roundNumberElement) {
+            roundNumberElement.textContent = currentRound;
+        }
+
+        // Update main heading
+        const mainHeading = document.querySelector('#draft-info h2');
+        if (mainHeading) {
+            mainHeading.innerHTML = `Round: <span id="round-number">${currentRound}</span>`;
         }
     }
-    console.log('Current Round:', currentRound); // Add this line for debugging
 }
 
 // Initial display of cards
