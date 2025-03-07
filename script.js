@@ -588,9 +588,13 @@ function updateDraftInfo() {
     if (roundInfo) {
         document.getElementById('picks-left').textContent = roundInfo.picks - picksMade;
         document.getElementById('round-number').textContent = currentRound;
+        // Update the main heading round number
+        const roundHeader = document.querySelector('#draft-info h2');
+        if (roundHeader) {
+            roundHeader.textContent = `Round: ${currentRound}`;
+        }
     }
-    // Add this line to update the round number in the main heading
-    document.querySelector('#draft-info h2').textContent = `Round: ${currentRound}`;
+    console.log('Current Round:', currentRound); // Add this line for debugging
 }
 
 // Initial display of cards
