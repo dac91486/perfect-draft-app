@@ -3,68 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfect Draft</title>
+    <title>Dac's S53 PBE Perfect Draft</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="logo">
-        <img src="https://i.imgur.com/DVPgggk.png" alt="Perfect Draft Logo">
-    </div>
-    <h1>Dac's S53 PBE Perfect Draft</h1>
-    <div id="notification-area"></div>
-    <div id="draft-info">
-        <h2>Round: <span id="current-round">1</span></h2>
-        <div id="card-count"></div>
-        <h2>Picks Left: <span id="picks-left"></span></h2>
+    <!-- Header Section -->
+    <header id="header-container">
+        <h1>Dac's S53 PBE Perfect Draft</h1>
+        <div id="notification-area" aria-live="polite"></div>
+        <nav>
+            <button id="howItWorksBtn" class="animated-button">
+                🎮 HOW IT WORKS...
+            </button>
+        </nav>
+        <div id="logo">
+            <img src="https://i.imgur.com/DVPgggk.png" alt="Perfect Draft Logo">
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section id="draft-info">
+            <h2>Round: <span id="round-number">1</span></h2>
+            <div id="card-count"></div>
+            <h2>Picks Left: <span id="picks-left"></span></h2>
+        </section>
+
+        <section id="round-cards" aria-label="Round Cards">
+            <!-- Cards will be dynamically displayed here -->
+        </section>
+
+        <section id="draft-history">
+            <h2>Draft History</h2>
+            <div class="draft-columns">
+                <article class="draft-column">
+                    <h3>Batters:</h3>
+                    <ul id="batters-list">
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                        <li>H - </li>
+                    </ul>
+                </article>
+                <article class="draft-column">
+                    <h3>Pitchers:</h3>
+                    <ul id="pitchers-list">
+                        <li>P - </li>
+                        <li>P - </li>
+                        <li>P - </li>
+                        <li>P - </li>
+                        <li>P - </li>
+                        <li>P - </li>
+                        <li>P - </li>
+                    </ul>
+                </article>
+                <article class="draft-column">
+                    <h3>Bench:</h3>
+                    <ul id="bench-list">
+                        <li>B - </li>
+                        <li>B - </li>
+                        <li>B - </li>
+                        <li>B - </li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <!-- Popup Modal -->
+    <div id="popup-modal" class="modal" hidden>
+        <div class="modal-content">
+            <button class="close-button" aria-label="Close">&times;</button>
+            <img id="popup-image" src="" alt="Full Card Image">
+        </div>
     </div>
 
-    <div id="round-cards">
-        <!-- Cards will be displayed here -->
-    </div>
+    <!-- Guide Modal -->
+    <div class="guide-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <span class="close-guide">×</span>
+            <div class="modal-header">
+                <h2>🌟 Perfect Draft Guide 🌟</h2>
+                <p>⚠️ <strong>Disclaimer:</strong> Only players from the S53 PBE Cards Binder are guaranteed inclusion to Tournament.</p>
+            </div>
+            <div class="slides-container">
+                <section class="guide-section active">
+                    <h3>🏆 Welcome to the Perfect Draft! 🏆</h3>
+                    <p>🔹 <em>Emulating OOTP's Perfect Team</em>, this draft lets you build your dream roster in <strong>12 exciting rounds</strong>!</p>
+                    <p>🔹 If you are collecting cards, you will <strong>get to keep all 20 cards</strong> you select!</p>
+                    <ul>
+                        <li>Keep that in mind when you are drafting! Do you want to focus on <strong>filling your collection</strong> or <strong>winning the tournament?</strong></li>
+                    </ul>
+                </section>
 
-    <div id="draft-history">
-        <h2>Draft History</h2>
-        <div class="draft-columns">
-            <div class="draft-column">
-                <h3>Batters:</h3>
-                <ul id="batters-list">
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                    <li>H - </li>
-                </ul>
+                <section class="guide-section inactive">
+                    <h3>🃏 Draft Overview:</h3>
+                    <p>🔹 <strong>12 rounds</strong> to choose your cards</p>
+                    <p>🔹 Everyone will choose from the <strong>same 6 cards in Rounds 1-2</strong></p>
+                    <ul>
+                        <li>Starting in Round 3, there will be more than 6 cards available, and each user will get to pick from a random 6.</li>
+                        <ul>
+                            <li>The exact numbers will be shown above the cards as <em>"displaying 6 of ___ cards."</em></li>
+                            <li>Above that is a <strong>colored box</strong> displaying what types of cards you pick from this round.</li>
+                        </ul>
+                    </ul>
+
+                    <!-- Green Box for DRAFT ROUNDS -->
+                    <div class="draft-rounds-box">
+                        <p><strong><u>DRAFT ROUNDS</u></strong></p>
+                        <p><strong>1.</strong> MVPs, PoTYs, Elite Diamond</p>
+                        <p><strong>2.</strong> RPoTY, RoTY, Silver RP</p>
+                        <p><strong>3.</strong> Diamonds</p>
+                        <p><strong>4.</strong> Golds*</p>
+                        <p><strong>5.</strong> All-Star Pitchers*</p>
+                        <p><strong>6.</strong> All-Star Hitters*</p>
+                        <p><strong>7.</strong> Silvers (except RP)*</p>
+                        <p><strong>8.</strong> Bronze Pitchers*</p>
+                        <p><strong>9.</strong> Bronze Hitters*</p>
+                        <p><strong>10.</strong> Iron Pitchers*</p>
+                        <p><strong>11.</strong> Iron Hitters*</p>
+                        <p><strong>12.</strong> Future Legends</p>
+                        <img src="https://i.imgur.com/kPJxOyM.png" alt="Baseball Bat" class="bat-icon">
+                        <p><em>*indicates 2 picks per round</em></p>
+                    </div>
+                </section>
+
+                <section class="guide-section inactive">
+                    <h3>📊 Draft Requirements:</h3>
+                    <p>🔹 You must select between <strong>9-14 hitters</strong></p>
+                    <p>🔹 You must select between <strong>7-11 pitchers</strong></p>
+                    <p>🔹 Exceeding limits will trigger an <strong>"All draft slots are full!"</strong> notification</p>
+                </section>
+
+                <section class="guide-section inactive">
+                    <h3>🖱️ How to Draft:</h3>
+                    <p>🔹 You can <strong>Click</strong> on cards to view stats</p>
+                    <p>🔹 Hit the <strong>"Draft"</strong> button to make your selection</p>
+                    <p>🔹 Watch as the <strong>Draft History</strong> updates with your picks</p>
+                </section>
+
+                <section class="guide-section inactive">
+                    <h3>📌 Key Information:</h3>
+                    <p>🔹 Round number, available cards, and picks left are displayed above</p>
+                    <p>🔹 Colored notifications matching card borders, <strong>indicate card types</strong></p>
+                    <p>🔹 You <strong>may not go back</strong> once a pick is made</p>
+                </section>
+
+                <section class="guide-section inactive">
+                    <h3>🏁 Post-Draft:</h3>
+                    <p>🔹 <strong>Copy the BBCode</strong> for your roster</p>
+                    <p>🔹 <strong>Post on Jcink</strong> to complete the draft</p>
+                    <p>🔹 <strong><em>Card Collectors:</em></strong></p>
+                    <ul>
+                        <li>Use this post to redeem your 20 selected cards</li>
+                        <li><em>Don't forget to add the S53 Perfect Draft Badge to your collection!</em></li>
+                        <ul>
+                            <li> Paste this where you want the badge: =IMAGE(toolbox!A32)</li>
+                        </ul>
+                    </ul>
+                </section>
+
+                <section class="guide-section inactive">
+                    <h3>🏟️ Tournament Details:</h3>
+                    <p>🔹 I will <strong>manually</strong> input the Teams into OOTP23</p>
+                    <p>🔹 <strong>Single elimination tournament</strong> with 7-game series per round</p>
+                    <p>🔹 <strong>AI determines</strong> lineups, pitching staffs & all strategies are balanced</p>
+                    <p><strong>See disclaimer above & the top bullet point here... If you know how to import/export rosters to OOTP hit me up, otherwise I'm going to limit it to a certain amount of teams</strong></p>
+                </section>
             </div>
-            <div class="draft-column">
-                <h3>Pitchers:</h3>
-                <ul id="pitchers-list">
-                    <li>P - </li>
-                    <li>P - </li>
-                    <li>P - </li>
-                    <li>P - </li>
-                    <li>P - </li>
-                    <li>P - </li>
-                    <li>P - </li>
-                </ul>
-            </div>
-            <div class="draft-column">
-                <h3>Bench:</h3>
-                <ul id="bench-list">
-                    <li>B - </li>
-                    <li>B - </li>
-                    <li>B - </li>
-                    <li>B - </li>
-                </ul>
+
+            <div class="slide-nav">
+                <div class="nav-item">
+                    <button class="prev-btn" aria-label="Previous slide">←</button>
+                    <span class="prev-title"></span>
+                </div>
+                <div class="nav-item">
+                    <button class="next-btn" aria-label="Next slide">→</button>
+                    <span class="next-title"></span>
+                </div>
             </div>
         </div>
     </div>
 
-    <button id="next-round">Next Round</button>
+    <footer>
+        <!-- Add any footer content here -->
+    </footer>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
