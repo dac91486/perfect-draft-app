@@ -424,12 +424,94 @@ const roundData = {
     }
 };
 
+// Add this to your script.js
+document.addEventListener('DOMContentLoaded', () => {
+    const guideBtn = document.getElementById('howItWorksBtn');
+    const guideModal = document.querySelector('.guide-modal');
+    const closeGuide = document.querySelector('.close-guide');
+
+    // Open modal
+    guideBtn.addEventListener('click', () => {
+        guideModal.classList.add('active');
+    });
+
+    // Close modal
+    closeGuide.addEventListener('click', () => {
+        guideModal.classList.remove('active');
+    });
+
+    // Close when clicking outside
+    guideModal.addEventListener('click', (e) => {
+        if(e.target.classList.contains('modal-overlay')) {
+            guideModal.classList.remove('active');
+        }
+    });
+
+    // Close with ESC key
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && guideModal.classList.contains('active')) {
+            guideModal.classList.remove('active');
+        }
+    });
+});
 
 let batterCount = 0;
 let pitcherCount = 0;
 let benchCount = 0;
 let picksMade = 0;
 let currentRound = 1;
+let draftHistory = []; // New array to store draft history
+let currentSlide = 0;
+const slides = document.querySelectorAll('.guide-section');
+const prevBtn = document.querySelector('.prev-btn');
+const nextBtn = document.querySelector('.next-btn');
+const prevTitle = document.querySelector('.prev-title');
+const nextTitle = document.querySelector('.next-title');
+
+function updateSlides() {
+    slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'inactive');
+        if(index === currentSlide) {
+            slide.classList.add('active');
+        } else {
+            slide.classList.add('inactive');
+        }
+    });
+
+    // Hide/show navigation buttons and update titles
+    if (currentSlide === 0) {
+        prevBtn.classList.add('hidden');
+        prevTitle.textContent = '';
+    } else {
+        prevBtn.classList.remove('hidden');
+        prevTitle.textContent = slides[currentSlide - 1].querySelector('h3').textContent;
+    }
+
+    if (currentSlide === slides.length - 1) {
+        nextBtn.classList.add('hidden');
+        nextTitle.textContent = '';
+    } else {
+        nextBtn.classList.remove('hidden');
+        nextTitle.textContent = slides[currentSlide + 1].querySelector('h3').textContent;
+    }
+}
+
+nextBtn.addEventListener('click', () => {
+    if(currentSlide < slides.length - 1) {
+        currentSlide++;
+        updateSlides();
+    }
+});
+
+prevBtn.addEventListener('click', () => {
+    if(currentSlide > 0) {
+        currentSlide--;
+        updateSlides();
+    }
+});
+
+// Initialize slides
+updateSlides();
 
 const roundCardsDiv = document.getElementById('round-cards');
 const draftHistoryList = document.getElementById('draft-history-list');
@@ -470,7 +552,6 @@ function displayRoundCards(roundNumber) {
         console.error('Invalid round number');
         return;
     }
-
     roundCardsDiv.innerHTML = ''; // Clear existing cards
 
     const roundInfo = roundData[roundNumber];
@@ -504,26 +585,49 @@ function displayRoundCards(roundNumber) {
         availableCards = getRandomSubarray(availableCards, 6);
     }
 
-    availableCards.forEach(cardId => {
-        const player = players[cardId];
-        if (player) {
-            const cardDiv = document.createElement('div');
-            cardDiv.classList.add('card');
+availableCards.forEach(cardId => {
+    const player = players[cardId];
+    if (player) {
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card');
+        
+        // Set gradient variables
+        cardDiv.style.setProperty('--gradient-color1', roundInfo.gradient.color1);
+        cardDiv.style.setProperty('--gradient-color2', roundInfo.gradient.color2);
 
-            // Set CSS variables for gradient
-            cardDiv.style.setProperty('--gradient-color1', roundInfo.gradient.color1);
-            cardDiv.style.setProperty('--gradient-color2', roundInfo.gradient.color2);
+        cardDiv.innerHTML = `
+            <div class="card-image-container">
+                <img src="${player.Card_Image_URL}" alt="${player.Player_Name}" class="card-thumbnail">
+            </div>
+            <p>${player.Player_Name} (${player.Position})</p>
+            <button onclick="draftCard(${cardId})">Draft</button>
+        `;
+        roundCardsDiv.appendChild(cardDiv);
 
-            cardDiv.innerHTML = `
-                <div class="card-image-container">
-                    <img src="${player.Card_Image_URL}" alt="${player.Player_Name}">
-                </div>
-                <p>${player.Player_Name} (${player.Position})</p>
-                <button onclick="draftCard(${cardId})">Draft</button>
-            `;
-            roundCardsDiv.appendChild(cardDiv);
-        }
-    });
+        // Add click event listener to the card image
+        const cardImage = cardDiv.querySelector('.card-thumbnail');
+        cardImage.addEventListener('click', () => openPopup(player.Card_Image_URL));
+    }
+});
+
+// Function to open the pop-up
+function openPopup(imageURL) {
+    document.getElementById('popup-image').src = imageURL;
+    document.getElementById('popup-modal').style.display = 'block';
+}
+
+// Function to close the pop-up
+document.querySelector('.close-button').addEventListener('click', function() {
+    document.getElementById('popup-modal').style.display = 'none';
+});
+
+// Close the modal if the user clicks outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('popup-modal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
 
     document.getElementById('card-count').innerHTML = `<em>${cardCountText}</em>`;
 
@@ -535,7 +639,15 @@ function displayRoundCards(roundNumber) {
     updateDraftInfo();
 }
 
-// Function to handle drafting a card
+// --- Utility Functions ---
+function removeElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.remove();
+    }
+}
+
+// --- Draft Management ---
 function draftCard(cardId) {
     if (typeof cardId !== 'number' || cardId <= 0) {
         console.error('Invalid card ID');
@@ -543,15 +655,12 @@ function draftCard(cardId) {
     }
 
     const player = players[cardId];
-
     if (!player) {
         console.error('Player not found');
         return;
     }
 
-    let listId;
-    let prefix;
-
+    let listId, prefix;
     if ((player.Position === 'SP' || player.Position === 'RP') && pitcherCount < 7) {
         listId = 'pitchers-list';
         prefix = 'P';
@@ -569,15 +678,19 @@ function draftCard(cardId) {
         return;
     }
 
-    const list = document.getElementById(listId);
+    draftHistory.push({
+        name: player.Player_Name,
+        position: player.Position,
+        image: player.Card_Image_URL
+    });
 
+    const list = document.getElementById(listId);
     if (!list) {
         console.error('List element not found');
         return;
     }
 
     const listItems = list.getElementsByTagName('li');
-
     for (let i = 0; i < listItems.length; i++) {
         if (listItems[i].textContent === `${prefix} - `) {
             listItems[i].textContent = `${prefix} - ${player.Player_Name} (${player.Position})`;
@@ -585,14 +698,11 @@ function draftCard(cardId) {
         }
     }
 
-    // Remove the drafted card from display
     const cardElement = document.querySelector(`[onclick="draftCard(${cardId})"]`);
-
     if (cardElement && cardElement.parentNode) {
         cardElement.parentNode.remove();
     }
 
-    // Remove drafted card from available cards
     if (roundData[currentRound] && Array.isArray(roundData[currentRound].cards)) {
         roundData[currentRound].cards = roundData[currentRound].cards.filter(id => id !== cardId);
     } else {
@@ -601,35 +711,33 @@ function draftCard(cardId) {
     }
 
     picksMade++;
-
     if (roundData[currentRound] && picksMade >= roundData[currentRound].picks) {
-        // Move to the next round
         currentRound++;
         picksMade = 0;
     }
 
-    updateDraftInfo();
-    displayRoundCards(currentRound);
+    if (!roundData[currentRound]) {
+        showResultsModal();
+    } else {
+        updateDraftInfo();
+        displayRoundCards(currentRound);
+    }
 }
 
-// Function to update draft information
 function updateDraftInfo() {
     const roundInfo = roundData[currentRound];
 
     if (roundInfo) {
-        // Update picks left
         const picksLeftElement = document.getElementById('picks-left');
         if (picksLeftElement) {
             picksLeftElement.textContent = roundInfo.picks - picksMade;
         }
 
-        // Update round number display
         const roundNumberElement = document.getElementById('round-number');
         if (roundNumberElement) {
             roundNumberElement.textContent = currentRound;
         }
 
-        // Update main heading
         const mainHeading = document.querySelector('#draft-info h2');
         if (mainHeading) {
             mainHeading.innerHTML = `Round: <span id="round-number">${currentRound}</span>`;
@@ -637,5 +745,118 @@ function updateDraftInfo() {
     }
 }
 
-// Initial display of cards
+// --- Modal Management ---
+function showResultsModal() {
+    const modal = document.createElement('div');
+    modal.id = 'results-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <!-- Copy to Clipboard button at the top -->
+            <button onclick="copyDraftResults()">Copy to Clipboard</button>
+
+            <!-- h2 below Copy to Clipboard -->
+            <h2 style="font-size: 2em; text-decoration: underline;">Draft Results</h2>
+
+            <!-- h1 below buttons -->
+            <h1 style="font-style: italic; font-size: 0.9em;">If you would like to be in the tournament, please Copy to Clipboard and then Jump to Jcink to post your draft results. If you are collecting cards you can link to this post in your collection.</h1>
+            
+            <!-- Canvas at the bottom -->
+            <canvas id="roster-canvas" width="400" height="600"></canvas>
+
+            <!-- Jump to Jcink and Close buttons -->
+            <div class="modal-buttons">
+                <button onclick="jumpToJcink()">Jump to Jcink</button>
+                <button onclick="closeResultsModal()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    drawRoster(); // Draw the roster on the canvas
+    modal.style.display = 'block';
+}
+
+function closeResultsModal() {
+    removeElement('results-modal');
+}
+
+// --- Canvas & ImgBB ---
+function drawRoster() {
+    const canvas = document.getElementById('roster-canvas');
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#D2B48C';
+    ctx.fillRect(0, 0, 400, 600);
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(20, 40, 360, 540);
+
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(0, 0, 400, 40);
+
+    ctx.fillStyle = 'black';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('ROSTER:', 30, 70);
+
+    const pitchers = draftHistory.filter(player => player.position === 'RP' || player.position === 'SP')
+        .sort((a, b) => a.name.localeCompare(b.name));
+    const hitters = draftHistory.filter(player => player.position !== 'RP' && player.position !== 'SP')
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    ctx.font = '16px Arial';
+    let y = 100;
+    [...pitchers, ...hitters].forEach(player => {
+        ctx.fillText(`[${player.position}] ${player.name}`, 30, y);
+        y += 25;
+    });
+}
+
+function uploadToImgBB(imageData) {
+    const apiKey = '182635c130ef35697f45f2987d939332';
+    const formData = new FormData();
+    formData.append('image', imageData);
+
+    return fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                return data.data.url;
+            } else {
+                throw new Error('Upload failed');
+            }
+        });
+}
+
+// --- Copy & Jcink ---
+function copyDraftResults() {
+    const canvas = document.getElementById('roster-canvas');
+    canvas.toBlob(async function (blob) {
+        try {
+            const imageUrl = await uploadToImgBB(blob);
+            const bbCode = `[img]${imageUrl}[/img]`;
+
+            const modifiedURLs = draftHistory.map(player =>
+                `[IMG]${player.image}[/IMG]`
+            ).join('\n');
+
+            const textToCopy = `[align=center]${modifiedURLs}\n[hr]@[dac]\n${bbCode}[/align]`;
+
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => alert('Draft results and roster image URL copied to clipboard!'))
+                .catch(err => console.error('Failed to copy:', err));
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload roster image. Draft results copied without roster image.');
+        }
+    }, 'image/png');
+}
+
+function jumpToJcink() {
+    window.location.href = 'https://probaseballexperience.jcink.net/index.php?act=Post&CODE=02&f=297&t=39091&st=';
+}
+
+// --- Initial Card Display ---
 displayRoundCards(currentRound);
