@@ -855,7 +855,7 @@ function copyDraftResults() {
 }
 
 function jumpToJcink() {
-    window.location.href = 'https://probaseballexperience.jcink.net/index.php?showtopic=39646&view=findpost&p=858055';
+    window.location.href = 'https://probaseballexperience.jcink.net/index.php?act=Post&CODE=02&f=297&t=39646&st=';
 }
 
 // --- Initial Card Display ---
